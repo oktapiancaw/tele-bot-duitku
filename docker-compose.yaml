@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:18.0-alpine3.22
+    container_name: finance_db
+    restart: always
+    env_file:
+      ./.env
+    ports:
+      - "5462:5432" 
+    volumes:
+      - pg_data:/var/lib/postgresql/data 
+
+  bot:
+    build: .
+    container_name: finance_bot
+    restart: always
+    depends_on:
+      - db 
+    env_file:
+      ./.env
+volumes:
+  pg_data:
