@@ -5,12 +5,19 @@ description = "Catatan Duit Ku"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "module-typica>=0.2.12",
     "psycopg2-binary>=2.9.11",
     "psycopg[binary]>=3.3.3",
+    "pydantic>=2.12.5",
+    "pydantic-settings>=2.13.1",
     "python-telegram-bot>=22.6",
     "sqlalchemy>=2.0.48",
+    "tomli>=2.4.0",
 ]
 
+
+[project.scripts]
+duitku-run = "src.main:main"
 
 [tool.uv]
 package = true

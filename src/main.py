@@ -13,8 +13,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+
 import logging
-import os
 
 from telegram.ext import (
     Application,
@@ -24,6 +24,7 @@ from telegram.ext import (
     filters,
 )
 
+from src.configs import config, project_meta
 from src.utils.handler import (
     AMOUNT,
     BILLING,
@@ -46,18 +47,15 @@ from src.utils.handler import (
     start_command,
 )
 
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
-)
-
-TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+LOGGER = logging.getLogger(project_meta.name)
 
 
 def main():
     # Base Commands
-    application = Application.builder().token(TOKEN).build()
+    application = Application.builder().token(config.telegram_token).build()
     application.add_handler(CommandHandler("start", start_command))
     application.add_handler(CommandHandler("help", help_command))
+
     # CRUD Commands
     application.add_handler(CommandHandler("addcat", add_category))
     application.add_handler(CommandHandler("addbill", add_billing))
@@ -72,9 +70,7 @@ def main():
         entry_points=[CommandHandler("log", log_start)],
         states={
             AMOUNT: [MessageHandler(filters.TEXT & ~filters.COMMAND, log_amount)],
-            TYPE: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, log_type)
-            ],  # Tambah baris ini!
+            TYPE: [MessageHandler(filters.TEXT & ~filters.COMMAND, log_type)],
             CATEGORY: [MessageHandler(filters.TEXT & ~filters.COMMAND, log_category)],
             BILLING: [MessageHandler(filters.TEXT & ~filters.COMMAND, log_billing)],
             DESCRIPTION: [
@@ -86,7 +82,7 @@ def main():
     application.add_handler(conv_handler)
 
     # Start polling
-    print("Bot is running...")
+    LOGGER.info("Bot is running...")
     application.run_polling()
 
 

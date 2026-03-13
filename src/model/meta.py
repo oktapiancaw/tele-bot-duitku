@@ -13,7 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import os
 from datetime import datetime
 
 from sqlalchemy import (
@@ -33,12 +32,7 @@ from sqlalchemy.orm import (
     sessionmaker,
 )
 
-DB_USER = os.getenv("DB_USER", "postgres")
-DB_PASS = os.getenv("DB_PASS", "password_rahasia")
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = os.getenv("DB_PORT", "5432")
-DB_NAME = os.getenv("DB_NAME", "finance_bot_db")
-DATABASE_URL = f"postgresql+psycopg://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+from src.configs import config
 
 
 class Base(DeclarativeBase):
@@ -53,7 +47,9 @@ class Category(Base):
 
     category_type: Mapped[str] = mapped_column(String, nullable=False, default="keluar")
     __table_args__ = (
-        UniqueConstraint("name", "user_id", name="uq_category_name_user_id"),
+        UniqueConstraint(
+            "name", "user_id", "category_type", name="uq_category_name_user_id"
+        ),
     )
 
     transactions: Mapped[list["Transaction"]] = relationship(
@@ -91,6 +87,6 @@ class Transaction(Base):
     )
 
 
-engine = create_engine(DATABASE_URL, echo=False)
+engine = create_engine(config.db.uri_string(base="postgresql+psycopg"), echo=False)
 Base.metadata.create_all(engine)
 SessionLocal = sessionmaker(bind=engine)

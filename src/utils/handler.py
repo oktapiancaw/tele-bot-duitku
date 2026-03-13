@@ -21,9 +21,11 @@ from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes, ConversationHandler
 
+from src.configs import project_meta
 from src.model.meta import BillingMethod, Category, SessionLocal, Transaction
 
 AMOUNT, TYPE, CATEGORY, BILLING, DESCRIPTION = range(5)
+LOGGER = logging.getLogger(project_meta.name)
 
 
 def format_rupiah(amount: float) -> str:
@@ -85,7 +87,11 @@ async def add_category(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     with SessionLocal() as session:
         existing = session.scalar(
-            select(Category).where(Category.name == name, Category.user_id == user_id)
+            select(Category).where(
+                Category.name == name,
+                Category.user_id == user_id,
+                Category.category_type == cat_type,
+            )
         )
         if existing:
             await update.message.reply_text(
@@ -138,7 +144,7 @@ async def log_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return AMOUNT
     except Exception as e:
-        logging.error(f"💥 Waduh, bot-nya nyungsep di log_start: {e}")
+        LOGGER.error(f"💥 Waduh, bot-nya nyungsep di log_start: {e}")
         raise e
 
 
@@ -196,6 +202,7 @@ async def log_type(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return ConversationHandler.END
 
         reply_keyboard = [[c.name] for c in categories]
+        print(reply_keyboard)
 
     await update.message.reply_text(
         f"Sip! Buat kategori *{cat_type.upper()}* yang mana nih? 🛒",
