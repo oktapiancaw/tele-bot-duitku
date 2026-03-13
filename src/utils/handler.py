@@ -202,7 +202,6 @@ async def log_type(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return ConversationHandler.END
 
         reply_keyboard = [[c.name] for c in categories]
-        print(reply_keyboard)
 
     await update.message.reply_text(
         f"Sip! Buat kategori *{cat_type.upper()}* yang mana nih? 🛒",
@@ -254,7 +253,9 @@ async def log_description(update: Update, context: ContextTypes.DEFAULT_TYPE):
     with SessionLocal() as session:
         cat = session.scalar(
             select(Category).where(
-                Category.name == data["category"], Category.user_id == user_id
+                Category.name == data["category"],
+                Category.category_type == data["cat_type"],
+                Category.user_id == user_id,
             )
         )
         bill = session.scalar(
@@ -316,6 +317,17 @@ async def generate_report(
             .group_by(Category.name, Category.category_type)
             .order_by(func.sum(Transaction.amount).desc())
         ).all()
+        highest_transaction = session.execute(
+            select(Category.name, Transaction.amount, Transaction.description)
+            .join(Transaction)
+            .where(
+                Transaction.timestamp >= time_threshold,
+                Transaction.user_id == user_id,
+                Category.category_type == "keluar",
+            )
+            .order_by(Transaction.amount.desc())
+            .limit(5)
+        ).all()
 
     if not results:
         await update.message.reply_text(
@@ -354,6 +366,12 @@ async def generate_report(
         else "Besar pasak dari tiang nih, awas boncos! 🚨"
     )
 
+    if highest_transaction:
+        report += "🟡 *PENGELUARAN TERBESAR*\n"
+        for h_cat_name, c_tran_amount, c_tran_desc in highest_transaction:
+            report += f"➖ {h_cat_name}: {format_rupiah(c_tran_amount)}\n"
+            report += f"▪️ {c_tran_desc}\n"
+        report += "\n"
     report += "====================\n"
     report += f"💵 *Total Masuk:* {format_rupiah(total_masuk)}\n"
     report += f"🔥 *Total Keluar:* {format_rupiah(total_keluar)}\n"
