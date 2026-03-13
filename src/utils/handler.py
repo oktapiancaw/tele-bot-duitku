@@ -314,6 +314,7 @@ async def generate_report(
                 Transaction.timestamp >= time_threshold, Transaction.user_id == user_id
             )
             .group_by(Category.name, Category.category_type)
+            .order_by(func.sum(Transaction.amount).desc())
         ).all()
 
     if not results:
